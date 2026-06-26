@@ -1,0 +1,36 @@
+models:
+  churn_model:
+    display_name: "Customer Churn"
+    reference_data: data/churn/reference_data.csv
+    holdout_data: data/churn/holdout_eval_set.csv
+    drift_threshold: 0.30
+    consecutive_triggers: 2
+    max_rejection_rate: 0.15
+    retrain_lock_ttl: 3600
+    schedule_cron: "0 * * * *"
+    features:
+      - tenure
+      - MonthlyCharges
+      - TotalCharges
+      - Contract
+      - InternetService
+      - TechSupport
+      - PaymentMethod
+    label_column: Churn
+
+  fraud_model:
+    display_name: "Fraud Detection"
+    reference_data: data/fraud/reference_data.csv
+    holdout_data: data/fraud/holdout_eval_set.csv
+    drift_threshold: 0.20
+    consecutive_triggers: 1
+    max_rejection_rate: 0.10
+    retrain_lock_ttl: 3600
+    schedule_cron: "30 * * * *"
+    features:
+      - amount
+      - merchant_category
+      - hour_of_day
+      - day_of_week
+      - distance_from_home
+    label_column: is_fraud

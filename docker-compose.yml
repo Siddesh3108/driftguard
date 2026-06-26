@@ -1,0 +1,109 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.14.1
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:////app/mlflow.db
+      --default-artifact-root /mlruns
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/mlruns
+      - mlflow_db:/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    command: uvicorn src.serve:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - FRONTEND_ORIGIN=http://localhost:5173
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - DRIFTGUARD_DB=data/driftguard.db
+    depends_on:
+      redis:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+
+  worker:
+    build: .
+    command: celery -A src.tasks worker --loglevel=info --concurrency=2
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - DRIFTGUARD_DB=data/driftguard.db
+    depends_on:
+      redis:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+
+  beat:
+    build: .
+    command: celery -A src.tasks beat --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - DRIFTGUARD_DB=data/driftguard.db
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  stream_consumer:
+    build: .
+    command: python src/stream_consumer.py --model churn_model --window 500
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - DRIFTGUARD_DB=data/driftguard.db
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+volumes:
+  redis_data:
+  mlflow_db:
