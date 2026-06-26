@@ -1,0 +1,35 @@
+# Environment files
+.env
+.env.local
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime artifacts
+mlruns/
+celerybeat-schedule
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# Node / frontend
+node_modules/
+frontend/node_modules/
+dist/
+build/
+
+# OS/editor junk
+.DS_Store
+.vscode/
+.idea/
