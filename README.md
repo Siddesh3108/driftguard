@@ -162,18 +162,6 @@ grounded in the actual computed feature statistics. The explanation is
 
 ---
 
-## Resume Bullets
 
-- Engineered a self-healing MLOps pipeline (MLflow · Evidently AI · Celery/Redis) that auto-detects data drift and retrains models without manual intervention
-- Designed a champion-challenger gate in MLflow Model Registry, preventing underperforming models from reaching production
-- Implemented debounced, Redis-lock-based trigger logic to eliminate duplicate retrains and false-positive drift alerts
-- Containerized a 7-service MLOps stack with Docker Compose — one-command deploy, zero-downtime model swaps
-- Built a 10-page React monitoring dashboard consuming a FastAPI backend with real-time drift, performance, and stream analytics
-- Extended pipeline to consume Redis Streams with consumer-group at-least-once delivery for continuous drift evaluation
-- Integrated local LLM (Ollama) for plain-English drift explanations with graceful fallback if model is unavailable
-- Generalized to multi-tenant architecture: config-driven per-model namespacing of locks, thresholds, and registry entries
-- Added real-time Slack alerting with cooldown logic and audit-log-first design so a Slack outage never breaks the pipeline
-
----
 
 *Built by Siddesh Lohkare — June 2026*
